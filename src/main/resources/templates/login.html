@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登入 - 線上聊天系統</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="login-container my-5 p-4 bg-white shadow-sm rounded">
+                <div class="text-center mb-4">
+                    <h2 class="font-weight-bold text-primary">線上交友聊天系統</h2>
+                    <p class="text-muted">登入您的帳戶</p>
+                </div>
+
+                <div th:if="${param.error}" class="alert alert-danger">
+                    用戶名或密碼不正確
+                </div>
+
+                <div th:if="${param.logout}" class="alert alert-success">
+                    您已成功登出
+                </div>
+
+                <div th:if="${param.registered}" class="alert alert-success">
+                    註冊成功！現在您可以登入
+                </div>
+
+                <form th:action="@{/login}" method="post">
+                    <div class="form-group">
+                        <label for="username">用戶名</label>
+                        <input type="text" id="username" name="username" class="form-control" autofocus required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">密碼</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+
+                    <div class="form-group form-check">
+                        <input type="checkbox" id="remember-me" name="remember-me" class="form-check-input">
+                        <label class="form-check-label" for="remember-me">記住我</label>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">登入</button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>還沒有帳戶? <a th:href="@{/register}" class="text-primary">立即註冊</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

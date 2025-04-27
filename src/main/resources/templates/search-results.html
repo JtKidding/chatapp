@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜尋結果 - 線上聊天系統</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/chat}">線上聊天系統</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/chat}">
+                        <i class="fas fa-comments"></i> 聊天
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/user/profile}">
+                        <i class="fas fa-user-circle"></i> 個人資料
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/user/friends}">
+                        <i class="fas fa-user-friends"></i> 好友
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <form th:action="@{/logout}" method="post" class="form-inline">
+                        <button type="submit" class="btn btn-link nav-link">
+                            <i class="fas fa-sign-out-alt"></i> 登出
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-search"></i> 搜尋結果
+                <small class="text-muted" th:if="${keyword != null && !keyword.isEmpty()}" th:text="'「' + ${keyword} + '」'"></small>
+            </h2>
+        </div>
+        <div class="col-md-6 text-right">
+            <form th:action="@{/chat/search}" method="get" class="form-inline justify-content-end">
+                <div class="input-group">
+                    <input type="text" name="keyword" class="form-control" placeholder="搜尋用戶或聊天室..." th:value="${keyword}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> 搜尋
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 用戶搜尋結果 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-users"></i> 用戶</h5>
+        </div>
+        <div class="card-body">
+            <div class="user-list">
+                <div th:each="user : ${userResults}" class="user-item d-flex align-items-center p-3 border-bottom">
+                    <div class="user-avatar mr-3">
+                        <img th:src="${user.profilePicture != null} ? ${user.profilePicture} : '/images/default-avatar.png'" alt="用戶頭像" class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+                        <span class="status-dot" th:classappend="${user.online} ? 'online' : 'offline'"></span>
+                    </div>
+                    <div class="user-info flex-grow-1">
+                        <h5 class="mb-1" th:text="${user.username}">用戶名稱</h5>
+                        <p class="mb-1 text-muted" th:if="${user.fullName != null && !user.fullName.isEmpty()}" th:text="${user.fullName}">全名</p>
+                        <p class="mb-0 small" th:text="${user.online} ? '在線' : '離線'">狀態</p>
+                    </div>
+                    <div class="user-actions">
+                        <a th:href="@{'/chat/user/' + ${user.id}}" class="btn btn-primary btn-sm" title="開始聊天">
+                            <i class="fas fa-comment"></i> 聊天
+                        </a>
+                        <a th:href="@{'/user/profile/' + ${user.id}}" class="btn btn-info btn-sm" title="檢視資料">
+                            <i class="fas fa-user"></i> 資料
+                        </a>
+
+                        <!-- 判斷是否為好友，顯示不同按鈕 -->
+                        <form th:if="${!#lists.contains(friends, user) && user.id != currentUser.id}"
+                              th:action="@{'/user/friends/add/' + ${user.id}}" method="post" class="d-inline">
+                            <button type="submit" class="btn btn-success btn-sm" title="添加好友">
+                                <i class="fas fa-user-plus"></i> 加好友
+                            </button>
+                        </form>
+                        <span th:if="${#lists.contains(friends, user)}" class="badge badge-success p-2">
+                                <i class="fas fa-check"></i> 已是好友
+                            </span>
+                    </div>
+                </div>
+
+                <div class="empty-list text-center py-4" th:if="${userResults == null || userResults.isEmpty()}">
+                    <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                    <p>沒有找到符合「<span th:text="${keyword}"></span>」的用戶</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 聊天室搜尋結果 -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-comments"></i> 聊天室</h5>
+        </div>
+        <div class="card-body">
+            <div class="room-list">
+                <div th:each="room : ${roomResults}" class="room-item d-flex align-items-center p-3 border-bottom">
+                    <div class="room-icon mr-3">
+                        <i class="fas fa-users fa-2x text-primary"></i>
+                    </div>
+                    <div class="room-info flex-grow-1">
+                        <h5 class="mb-1" th:text="${room.name}">聊天室名稱</h5>
+                        <p class="mb-1 text-muted" th:if="${room.description != null && !room.description.isEmpty()}" th:text="${room.description}">描述</p>
+                        <p class="mb-0 small">
+                            <span th:text="${room.participants.size()} + ' 名成員'">成員數</span>
+                            <span class="text-muted ml-2" th:text="'創建者: ' + ${room.creator.username}">創建者</span>
+                        </p>
+                    </div>
+                    <div class="room-actions">
+                        <!-- 如果已是成員，顯示進入按鈕 -->
+                        <div th:if="${#lists.contains(room.participants, currentUser)}">
+                            <a th:href="@{'/chat/room/' + ${room.id}}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-sign-in-alt"></i> 進入聊天室
+                            </a>
+                        </div>
+
+                        <!-- 如果不是成員且聊天室不是私人的，顯示加入按鈕 -->
+                        <div th:if="${!#lists.contains(room.participants, currentUser) && !room.isPrivate}">
+                            <form th:action="@{'/chat/room/' + ${room.id} + '/join'}" method="post">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> 加入聊天室
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- 私人聊天室顯示鎖定圖標 -->
+                        <div th:if="${!#lists.contains(room.participants, currentUser) && room.isPrivate}">
+                            <button class="btn btn-secondary btn-sm" disabled title="這是私人聊天室">
+                                <i class="fas fa-lock"></i> 私人聊天室
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-list text-center py-4" th:if="${roomResults == null || roomResults.isEmpty()}">
+                    <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                    <p>沒有找到符合「<span th:text="${keyword}"></span>」的聊天室</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 沒有結果時顯示 -->
+    <div class="text-center py-5" th:if="${(userResults == null || userResults.isEmpty()) && (roomResults == null || roomResults.isEmpty())}">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h3>沒有搜尋結果</h3>
+        <p class="text-muted">嘗試使用其他關鍵詞搜尋</p>
+        <a th:href="@{/chat}" class="btn btn-primary mt-2">
+            <i class="fas fa-arrow-left"></i> 返回聊天
+        </a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

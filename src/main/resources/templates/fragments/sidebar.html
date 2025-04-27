@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 側邊欄片段 -->
+<div th:fragment="sidebar" class="sidebar">
+    <div class="user-profile">
+        <div class="user-avatar">
+            <img th:src="${currentUser.profilePicture != null} ? ${currentUser.profilePicture} : '/images/default-avatar.png'" alt="用戶頭像" id="currentUserAvatar">
+            <span class="status-dot online"></span>
+        </div>
+        <div class="user-info">
+            <h5 th:text="${currentUser.username}">用戶名</h5>
+            <p class="status-text">在線</p>
+        </div>
+        <div class="user-actions dropdown">
+            <button class="btn dropdown-toggle" data-toggle="dropdown">
+                <i class="fas fa-ellipsis-v"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right">
+                <a class="dropdown-item" th:href="@{/user/profile}">
+                    <i class="fas fa-user-circle"></i> 個人資料
+                </a>
+                <a class="dropdown-item" th:href="@{/user/edit}">
+                    <i class="fas fa-cog"></i> 設定
+                </a>
+                <div class="dropdown-divider"></div>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> 登出
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="search-container">
+        <form th:action="@{/chat/search}" method="get" class="search-form">
+            <div class="input-group">
+                <input type="text" name="keyword" class="form-control" placeholder="搜尋用戶或聊天室...">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 標籤頁 -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="chats-tab" data-toggle="tab" href="#chats" role="tab">聊天</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="friends-tab" data-toggle="tab" href="#friends" role="tab">好友</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="rooms-tab" data-toggle="tab" href="#rooms" role="tab">聊天室</a>
+        </li>
+    </ul>
+
+    <!-- 標籤頁內容 -->
+    <div class="tab-content">
+        <!-- 最近聊天列表 -->
+        <div class="tab-pane fade show active" id="chats" role="tabpanel">
+            <div class="chat-list">
+                <!-- 這裡會動態填充最近的聊天 -->
+                <div class="empty-list-message text-center py-4" th:if="${friends == null || friends.isEmpty()}">
+                    <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                    <p>還沒有聊天記錄</p>
+                    <p>添加好友開始聊天</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 好友列表 -->
+        <div class="tab-pane fade" id="friends" role="tabpanel">
+            <div class="friend-list">
+                <div th:each="friend : ${friends}" class="contact-item">
+                    <div class="contact-avatar">
+                        <img th:src="${friend.profilePicture != null} ? ${friend.profilePicture} : '/images/default-avatar.png'" alt="好友頭像">
+                        <span class="status-dot" th:classappend="${friend.online} ? 'online' : 'offline'"></span>
+                    </div>
+                    <div class="contact-info">
+                        <h6 class="contact-name" th:text="${friend.username}">好友名稱</h6>
+                        <p class="contact-status" th:text="${friend.online} ? '在線' : '離線'">狀態</p>
+                    </div>
+                    <a th:href="@{'/chat/user/' + ${friend.id}}" class="btn btn-sm btn-primary chat-button">
+                        <i class="fas fa-comment"></i>
+                    </a>
+                </div>
+                <div class="empty-list-message text-center py-4" th:if="${friends == null || friends.isEmpty()}">
+                    <i class="fas fa-user-friends fa-2x text-muted mb-2"></i>
+                    <p>您還沒有好友</p>
+                    <p>搜尋用戶並添加好友</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 聊天室列表 -->
+        <div class="tab-pane fade" id="rooms" role="tabpanel">
+            <div class="room-actions mb-2">
+                <button class="btn btn-sm btn-primary btn-block" data-toggle="modal" data-target="#createRoomModal">
+                    <i class="fas fa-plus"></i> 創建新聊天室
+                </button>
+            </div>
+            <div class="room-list">
+                <div th:each="room : ${userRooms}" class="room-item">
+                    <div class="room-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="room-info">
+                        <h6 class="room-name" th:text="${room.name}">聊天室名稱</h6>
+                        <p class="room-description" th:text="${room.description != null && !room.description.isEmpty()} ? ${room.description} : '沒有描述'">描述</p>
+                    </div>
+                    <a th:href="@{'/chat/room/' + ${room.id}}" class="btn btn-sm btn-primary chat-button">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </a>
+                </div>
+                <div class="empty-list-message text-center py-4" th:if="${userRooms == null || userRooms.isEmpty()}">
+                    <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                    <p>您還沒有加入任何聊天室</p>
+                    <p>創建或加入聊天室開始群聊</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

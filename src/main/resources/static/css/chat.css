@@ -1,0 +1,507 @@
+/**
+ * 聊天頁面專用樣式
+ */
+
+/* 基本布局 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.chat-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 側邊欄 */
+.sidebar {
+    width: 320px;
+    background-color: #fff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* 用戶資料區 */
+.user-profile {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+
+.user-avatar {
+    position: relative;
+    margin-right: 12px;
+}
+
+.user-avatar img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-info {
+    flex-grow: 1;
+}
+
+.user-info h5 {
+    margin-bottom: 2px;
+    font-size: 16px;
+}
+
+.status-text {
+    color: #6c757d;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.user-actions .btn {
+    padding: 0;
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 18px;
+}
+
+/* 搜索框 */
+.search-container {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.search-form .form-control {
+    border-radius: 20px;
+    background-color: #f1f3f4;
+    border: none;
+    font-size: 14px;
+}
+
+.search-form .input-group-append .btn {
+    border-radius: 0 20px 20px 0;
+    background-color: #f1f3f4;
+    border: none;
+    color: #6c757d;
+}
+
+/* 標籤頁 */
+.nav-tabs {
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 15px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    font-size: 14px;
+    color: #495057;
+    padding: 10px 15px;
+    margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
+    background-color: transparent;
+}
+
+/* 標籤頁內容 */
+.tab-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* 聯絡人列表 */
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f3f4;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s;
+}
+
+.contact-item:hover {
+    background-color: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+}
+
+.contact-avatar {
+    position: relative;
+    margin-right: 12px;
+}
+
+.contact-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.contact-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.contact-name {
+    margin-bottom: 2px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.contact-status, .contact-message {
+    color: #6c757d;
+    font-size: 12px;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-button {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* 聊天室列表 */
+.room-actions {
+    padding: 10px 15px;
+}
+
+.room-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.room-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #4361ee;
+}
+
+.room-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.room-name {
+    margin-bottom: 2px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.room-description {
+    color: #6c757d;
+    font-size: 12px;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 空列表提示 */
+.empty-list-message {
+    color: #6c757d;
+}
+
+.empty-list-message i {
+    color: #adb5bd;
+}
+
+/* 主聊天區域 */
+.chat-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #f7f9fb;
+    position: relative;
+}
+
+/* 歡迎螢幕 */
+.chat-welcome-screen {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    text-align: center;
+    padding: 20px;
+}
+
+.welcome-icon {
+    color: #e0e7ff;
+    margin-bottom: 20px;
+}
+
+/* 聊天頭部 */
+.chat-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.back-button {
+    margin-right: 10px;
+    color: #6c757d;
+    display: none;
+}
+
+.chat-contact-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.chat-avatar {
+    position: relative;
+    margin-right: 12px;
+}
+
+.chat-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.room-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    color: #4361ee;
+}
+
+.chat-contact-details h5 {
+    margin-bottom: 2px;
+    font-size: 16px;
+}
+
+.participants-count {
+    color: #6c757d;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.chat-actions .btn {
+    padding: 5px;
+    background: none;
+    border: none;
+    color: #6c757d;
+    font-size: 16px;
+}
+
+/* 聊天訊息區域 */
+.chat-messages {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 訊息樣式 */
+.message {
+    display: flex;
+    margin-bottom: 12px;
+    max-width: 80%;
+}
+
+.message.sent {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message.received {
+    align-self: flex-start;
+}
+
+.message-avatar {
+    margin: 0 8px;
+}
+
+.message-avatar img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.message-content {
+    background-color: #fff;
+    padding: 10px 12px;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    position: relative;
+    max-width: 100%;
+}
+
+.message.sent .message-content {
+    background-color: #e3f2fd;
+    border-bottom-right-radius: 5px;
+}
+
+.message.received .message-content {
+    background-color: #fff;
+    border-bottom-left-radius: 5px;
+}
+
+.message-sender {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 3px;
+    color: #6c757d;
+}
+
+.message-text {
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #6c757d;
+    text-align: right;
+    margin-top: 2px;
+}
+
+/* 系統訊息 */
+.system-message {
+    align-self: center;
+    background-color: #f8f9fa;
+    padding: 6px 12px;
+    border-radius: 15px;
+    margin: 10px 0;
+    font-size: 12px;
+    color: #6c757d;
+    max-width: 80%;
+    text-align: center;
+}
+
+.system-message p {
+    margin-bottom: 0;
+}
+
+/* 打字指示器 */
+.typing-indicator {
+    align-self: flex-start;
+    background-color: #f8f9fa;
+    padding: 6px 12px;
+    border-radius: 15px;
+    margin: 5px 0;
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* 空聊天提示 */
+.empty-chat-message {
+    align-self: center;
+    text-align: center;
+    color: #6c757d;
+    margin: 30px 0;
+}
+
+/* 聊天輸入區域 */
+.chat-input {
+    padding: 10px 15px;
+    background-color: #fff;
+    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+.message-form .form-control {
+    border-radius: 20px;
+    background-color: #f1f3f4;
+    border: none;
+    font-size: 14px;
+    padding-right: 40px;
+}
+
+.message-form .btn {
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-button {
+    color: #6c757d;
+}
+
+/* 成員列表 */
+.participant-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.participant-avatar {
+    position: relative;
+}
+
+.participant-avatar img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* 重連提示 */
+.reconnect-alert {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* 響應式調整 */
+@media (max-width: 767.98px) {
+    .sidebar {
+        width: 100%;
+        position: absolute;
+        z-index: 10;
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .back-button {
+        display: block;
+    }
+}

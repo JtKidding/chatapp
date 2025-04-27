@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊 - 線上聊天系統</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="login-container my-5 p-4 bg-white shadow-sm rounded">
+                <div class="text-center mb-4">
+                    <h2 class="font-weight-bold text-primary">線上交友聊天系統</h2>
+                    <p class="text-muted">創建新帳戶</p>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                <form th:action="@{/register}" method="post" th:object="${registerDTO}">
+                    <div class="form-group">
+                        <label for="username">用戶名 <span class="text-danger">*</span></label>
+                        <input type="text" id="username" th:field="*{username}" class="form-control" th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">電子郵件 <span class="text-danger">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fullName">全名</label>
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">密碼 <span class="text-danger">*</span></label>
+                        <input type="password" id="password" th:field="*{password}" class="form-control" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">確認密碼 <span class="text-danger">*</span></label>
+                        <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">註冊</button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>已有帳戶? <a th:href="@{/login}" class="text-primary">立即登入</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

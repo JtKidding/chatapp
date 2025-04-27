@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'與 ' + ${chatPartner.username} + ' 聊天'">聊天</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+</head>
+<body>
+<div class="chat-container">
+    <!-- 側邊欄 (可以包含 th:replace 實現共用元件) -->
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <!-- 主聊天區域 -->
+    <div class="chat-area">
+        <!-- 聊天頭部 -->
+        <div class="chat-header">
+            <a href="javascript:history.back()" class="back-button d-md-none">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="chat-contact-info">
+                <div class="chat-avatar">
+                    <img th:src="${chatPartner.profilePicture != null} ? ${chatPartner.profilePicture} : '/images/default-avatar.png'" alt="聯絡人頭像">
+                    <span class="status-dot" th:classappend="${chatPartner.online} ? 'online' : 'offline'"></span>
+                </div>
+                <div class="chat-contact-details">
+                    <h5 th:text="${chatPartner.username}">聯絡人名稱</h5>
+                    <p class="status-text" th:text="${chatPartner.online} ? '在線' : '離線'">狀態</p>
+                </div>
+            </div>
+            <div class="chat-actions dropdown">
+                <button class="btn dropdown-toggle" data-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item" th:href="@{'/user/profile/' + ${chatPartner.id}}">
+                        <i class="fas fa-user-circle"></i> 查看個人資料
+                    </a>
+                    <div th:if="${#lists.contains(friends, chatPartner)}">
+                        <form th:action="@{'/user/friends/remove/' + ${chatPartner.id}}" method="post">
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="fas fa-user-times"></i> 移除好友
+                            </button>
+                        </form>
+                    </div>
+                    <div th:unless="${#lists.contains(friends, chatPartner)}">
+                        <form th:action="@{'/user/friends/add/' + ${chatPartner.id}}" method="post">
+                            <button type="submit" class="dropdown-item text-primary">
+                                <i class="fas fa-user-plus"></i> 添加為好友
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 聊天訊息區域 -->
+        <div class="chat-messages" id="chatMessages">
+            <div th:each="message : ${messages}" class="message"
+                 th:classappend="${message.senderId == currentUser.id} ? 'sent' : 'received'">
+                <div class="message-avatar">
+                    <img th:src="${message.senderId == currentUser.id ?
+                                (currentUser.profilePicture != null ? currentUser.profilePicture : '/images/default-avatar.png') :
+                                (chatPartner.profilePicture != null ? chatPartner.profilePicture : '/images/default-avatar.png')}"
+                         alt="頭像">
+                </div>
+                <div class="message-content">
+                    <div class="message-text" th:text="${message.content}">訊息內容</div>
+                    <div class="message-time" th:text="${#temporals.format(message.timestamp, 'HH:mm')}">時間</div>
+                </div>
+            </div>
+
+            <div th:if="${messages == null || messages.isEmpty()}" class="empty-chat-message">
+                <p>還沒有聊天記錄</p>
+                <p>發送訊息開始聊天</p>
+            </div>
+        </div>
+
+        <!-- 輸入區域 -->
+        <div class="chat-input">
+            <form id="messageForm" class="message-form">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <button type="button" class="btn btn-outline-secondary emoji-button">
+                            <i class="far fa-smile"></i>
+                        </button>
+                    </div>
+                    <input type="text" id="messageInput" class="form-control" placeholder="輸入訊息..." autocomplete="off">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script th:inline="javascript">
+    // 從Thymeleaf獲取數據
+    const currentUserId = [[${currentUser.id}]];
+    const currentUsername = [[${currentUser.username}]];
+    const receiverId = [[${chatPartner.id}]];
+    const receiverUsername = [[${chatPartner.username}]];
+</script>
+<script th:src="@{/js/private-chat.js}"></script>
+</body>
+</html>

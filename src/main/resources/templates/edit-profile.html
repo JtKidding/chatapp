@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編輯個人資料 - 線上聊天系統</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/chat}">線上聊天系統</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/chat}">
+                        <i class="fas fa-comments"></i> 聊天
+                    </a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" th:href="@{/user/profile}">
+                        <i class="fas fa-user-circle"></i> 個人資料
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/user/friends}">
+                        <i class="fas fa-user-friends"></i> 好友
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <form th:action="@{/logout}" method="post" class="form-inline">
+                        <button type="submit" class="btn btn-link nav-link">
+                            <i class="fas fa-sign-out-alt"></i> 登出
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="profile-avatar mb-3">
+                        <img th:src="${userDTO.profilePicture != null} ? ${userDTO.profilePicture} : '/images/default-avatar.png'"
+                             alt="用戶頭像" class="img-fluid rounded-circle"
+                             style="width:120px; height:120px; object-fit: cover;" id="avatarPreview">
+                    </div>
+                    <h5 class="card-title" th:text="${userDTO.username}">用戶名</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="changeAvatarBtn">
+                        <i class="fas fa-camera"></i> 更換頭像
+                    </button>
+                </div>
+            </div>
+            <div class="list-group mb-4">
+                <a th:href="@{/user/profile}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-user-circle"></i> 個人資料
+                </a>
+                <a th:href="@{/user/edit}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-edit"></i> 編輯資料
+                </a>
+                <a th:href="@{/user/change-password}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-key"></i> 修改密碼
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">編輯個人資料</h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+                    <form th:action="@{/user/edit}" method="post" th:object="${userDTO}">
+                        <input type="hidden" th:field="*{id}">
+                        <input type="hidden" th:field="*{profilePicture}" id="profilePictureInput">
+
+                        <div class="form-group">
+                            <label for="username">用戶名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" th:field="*{username}"
+                                   th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">電子郵件 <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" th:field="*{email}"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'" required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fullName">全名</label>
+                            <input type="text" class="form-control" id="fullName" th:field="*{fullName}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bio">個人簡介</label>
+                            <textarea class="form-control" id="bio" th:field="*{bio}" rows="4"
+                                      placeholder="介紹一下自己..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 保存更改
+                            </button>
+                            <a th:href="@{/user/profile}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 虛擬頭像上傳模態框 (實際專案中需要實現真正的上傳功能) -->
+<div class="modal fade" id="avatarModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">更換頭像</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="avatarUpload">選擇圖片</label>
+                    <input type="file" class="form-control-file" id="avatarUpload" accept="image/*">
+                </div>
+                <div class="avatar-preview mt-3 text-center d-none">
+                    <img src="" alt="預覽" id="avatarPreviewImage" class="img-fluid rounded" style="max-height: 200px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveAvatarBtn">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // 更換頭像功能
+        $('#changeAvatarBtn').click(function() {
+            $('#avatarModal').modal('show');
+        });
+
+        $('#avatarUpload').change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('.avatar-preview').removeClass('d-none');
+                    $('#avatarPreviewImage').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $('#saveAvatarBtn').click(function() {
+            // 獲取圖片 base64 資料
+            const imageUrl = $('#avatarPreviewImage').attr('src');
+
+            if (imageUrl) {
+                // 檢查圖片大小
+                const base64Size = calculateBase64Size(imageUrl);
+                if (base64Size > 5) { // 大於5MB
+                    alert('圖片太大，請選擇較小的圖片（最大5MB）');
+                    return;
+                }
+
+                $('#profilePictureInput').val(imageUrl);
+                $('#avatarPreview').attr('src', imageUrl);
+                $('#avatarModal').modal('hide');
+            } else {
+                alert('請先選擇圖片');
+            }
+        });
+
+        // 計算base64圖片大小（MB）
+        function calculateBase64Size(base64String) {
+            // 移除前綴
+            let base64Data = base64String;
+            if (base64String.includes(',')) {
+                base64Data = base64String.split(',')[1];
+            }
+            // base64 字符串長度 * 0.75 / (1024 * 1024) = 大小（MB）
+            return (base64Data.length * 0.75) / (1024 * 1024);
+        }
+    });
+</script>
+</body>
+</html>
