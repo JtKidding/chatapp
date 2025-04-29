@@ -145,3 +145,9 @@ Caused by: org.h2.mvstore.MVStoreException: The file is locked: E:/spring/chatap
 	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
 	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
 	... 26 more
+2025-04-28 11:16:38.499228+08:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "CHAT_ROOM" not found; SQL statement:
+select * from chat_room [42102-232]
+2025-04-28 11:48:03.399868+08:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement "[*]USERS"; expected "UPDATE"; SQL statement:
+USERS [42001-232]

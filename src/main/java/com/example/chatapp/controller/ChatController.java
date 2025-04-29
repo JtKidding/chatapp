@@ -62,11 +62,27 @@ public class ChatController {
 
         UserDTO chatPartner = userService.getUserById(userId);
         List<MessageDTO> messages = messageService.getConversation(currentUser.getId(), userId);
+        List<UserDTO> friends = userService.getUserFriends(currentUser.getId());
+
+        // 檢查是否為好友
+        boolean isFriend = false;
+        for (UserDTO friend : friends) {
+            if (friend.getId().equals(userId)) {
+                isFriend = true;
+                break;
+            }
+        }
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("chatPartner", chatPartner);
         model.addAttribute("messages", messages);
         model.addAttribute("chatType", "private");
+        model.addAttribute("friends", friends);
+        model.addAttribute("isFriend", isFriend);
+
+        System.out.println("載入聊天視窗: 當前用戶=" + currentUser.getUsername() +
+                ", 聊天對象=" + chatPartner.getUsername() +
+                ", 訊息數量=" + (messages != null ? messages.size() : 0));
 
         return "chat-window";
     }
@@ -78,28 +94,33 @@ public class ChatController {
                 .orElseThrow(() -> new IllegalStateException("用戶不存在"));
 
         ChatRoom chatRoom = chatRoomService.getChatRoomById(roomId);
+        List<UserDTO> friends = userService.getUserFriends(currentUser.getId());
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("chatRoom", chatRoom);
         model.addAttribute("participants", chatRoom.getParticipants());
         model.addAttribute("chatType", "room");
+        model.addAttribute("friends", friends);  // 添加friends變數
 
         return "chat-room";
     }
 
     @GetMapping("/chat/search")
-    public String searchUsers(@RequestParam String keyword, Model model, Authentication authentication) {
+    public String searchUsers(@RequestParam(required = false) String keyword, Model model, Authentication authentication) {
         String username = authentication.getName();
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("用戶不存在"));
 
-        List<UserDTO> searchResults = userService.searchUsers(keyword);
-        List<ChatRoom> roomResults = chatRoomService.searchChatRooms(keyword);
+        // 若未提供關鍵字，則顯示空結果
+        List<UserDTO> searchResults = keyword != null ? userService.searchUsers(keyword) : List.of();
+        List<ChatRoom> roomResults = keyword != null ? chatRoomService.searchChatRooms(keyword) : List.of();
+        List<UserDTO> friends = userService.getUserFriends(currentUser.getId());
 
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("userResults", searchResults);
         model.addAttribute("roomResults", roomResults);
-        model.addAttribute("keyword", keyword);
+        model.addAttribute("keyword", keyword != null ? keyword : "");
+        model.addAttribute("friends", friends);  // 確保 friends 變數總是被設置
 
         return "search-results";
     }

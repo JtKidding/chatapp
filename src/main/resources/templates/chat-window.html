@@ -39,14 +39,14 @@
                     <a class="dropdown-item" th:href="@{'/user/profile/' + ${chatPartner.id}}">
                         <i class="fas fa-user-circle"></i> 查看個人資料
                     </a>
-                    <div th:if="${#lists.contains(friends, chatPartner)}">
+                    <div th:if="${friends != null && #lists.contains(friends, chatPartner)}">
                         <form th:action="@{'/user/friends/remove/' + ${chatPartner.id}}" method="post">
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="fas fa-user-times"></i> 移除好友
                             </button>
                         </form>
                     </div>
-                    <div th:unless="${#lists.contains(friends, chatPartner)}">
+                    <div th:if="${friends != null && !#lists.contains(friends, chatPartner)}">
                         <form th:action="@{'/user/friends/add/' + ${chatPartner.id}}" method="post">
                             <button type="submit" class="dropdown-item text-primary">
                                 <i class="fas fa-user-plus"></i> 添加為好友
@@ -111,6 +111,12 @@
     const currentUsername = [[${currentUser.username}]];
     const receiverId = [[${chatPartner.id}]];
     const receiverUsername = [[${chatPartner.username}]];
+
+    // 檢查變量是否正確加載
+    console.log("初始化聊天頁面: 當前用戶ID=" + currentUserId +
+        ", 當前用戶名=" + currentUsername +
+        ", 接收者ID=" + receiverId +
+        ", 接收者用戶名=" + receiverUsername);
 </script>
 <script th:src="@{/js/private-chat.js}"></script>
 </body>

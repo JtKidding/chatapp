@@ -11,11 +11,13 @@ let typingTimeout = null;
 
 // 連接WebSocket
 function connect() {
+    console.log("嘗試連接WebSocket...");
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
 
     // 關閉console中的debug輸出
-    stompClient.debug = null;
+    // 在開發模式下保留debug輸出，以便排查問題
+    // stompClient.debug = null;
 
     stompClient.connect({}, function(frame) {
         isConnected = true;
@@ -23,18 +25,24 @@ function connect() {
 
         // 訂閱個人頻道以接收訊息
         stompClient.subscribe('/user/' + currentUserId + '/queue/messages', onMessageReceived);
+        console.log("已訂閱: /user/" + currentUserId + "/queue/messages");
 
         // 訂閱打字狀態通知
         stompClient.subscribe('/user/' + currentUserId + '/queue/typing', onTypingReceived);
+        console.log("已訂閱打字通知頻道");
 
         // 發送加入聊天的系統消息
         sendStatusMessage(ChatMessageType.JOIN);
+        console.log("已發送加入聊天的系統消息");
 
         // 設置用戶的在線狀態
         updateUserStatus(true);
 
         // 啟用發送按鈕
         $("#messageForm button").prop("disabled", false);
+
+        // 移除連接錯誤消息（如果有）
+        removeErrorMessage();
     }, function(error) {
         isConnected = false;
         console.log('無法連接WebSocket: ' + error);
@@ -61,6 +69,8 @@ function sendMessage() {
     const content = messageInput.val().trim();
 
     if (content && isConnected) {
+        console.log(currentUserId + "正在發送消息: '" + content + "' 給接收者ID: " + receiverId);
+
         const chatMessage = {
             type: ChatMessageType.CHAT,
             senderId: currentUserId,
@@ -75,6 +85,12 @@ function sendMessage() {
 
         // 清空輸入框
         messageInput.val('');
+
+        // 也在本地顯示消息，提供即時反饋
+        displayChatMessage(chatMessage);
+
+        // 滾動到底部
+        scrollToBottom();
 
         // 聚焦回輸入框
         messageInput.focus();
@@ -123,6 +139,7 @@ function sendStatusMessage(type) {
 
 // 更新用戶在線狀態
 function updateUserStatus(isOnline) {
+    console.log("更新用戶狀態: " + (isOnline ? "在線" : "離線"));
     $.ajax({
         url: '/api/user/status',
         method: 'POST',
@@ -137,46 +154,70 @@ function updateUserStatus(isOnline) {
 
 // 當收到消息時
 function onMessageReceived(payload) {
-    const message = JSON.parse(payload.body);
+    console.log("收到消息: ", payload);
 
-    switch(message.type) {
-        case ChatMessageType.CHAT:
-            displayChatMessage(message);
-            break;
-        case ChatMessageType.JOIN:
-            displaySystemMessage(message.senderUsername + ' 加入了聊天');
-            break;
-        case ChatMessageType.LEAVE:
-            displaySystemMessage(message.senderUsername + ' 離開了聊天');
-            break;
+    try {
+        const message = JSON.parse(payload.body);
+        console.log("解析的消息: ", message);
+
+        switch(message.type) {
+            case ChatMessageType.CHAT:
+                displayChatMessage(message);
+                break;
+            case ChatMessageType.JOIN:
+                displaySystemMessage(message.senderUsername + ' 加入了聊天');
+                break;
+            case ChatMessageType.LEAVE:
+                displaySystemMessage(message.senderUsername + ' 離開了聊天');
+                break;
+        }
+
+        // 滾動到最新消息
+        scrollToBottom();
+    } catch (e) {
+        console.error("處理接收的消息時出錯: ", e);
     }
-
-    // 滾動到最新消息
-    scrollToBottom();
 }
 
 // 當收到打字狀態通知時
 function onTypingReceived(payload) {
-    const message = JSON.parse(payload.body);
+    try {
+        const message = JSON.parse(payload.body);
 
-    // 只有來自聊天對象的打字通知才顯示
-    if (message.senderId == receiverId) {
-        showTypingIndicator();
+        // 只有來自聊天對象的打字通知才顯示
+        if (message.senderId == receiverId) {
+            showTypingIndicator();
 
-        // 3秒後隱藏打字指示器
-        setTimeout(hideTypingIndicator, 3000);
+            // 3秒後隱藏打字指示器
+            setTimeout(hideTypingIndicator, 3000);
+        }
+    } catch (e) {
+        console.error("處理打字通知時出錯: ", e);
     }
 }
 
 // 顯示聊天消息
 function displayChatMessage(message) {
+    console.log("顯示聊天消息: ", message);
+
     const isSent = message.senderId == currentUserId;
     const messageClass = isSent ? 'sent' : 'received';
+    // 獲取頭像URL
     const avatar = isSent ?
         ($("#currentUserAvatar").attr('src') || '/images/default-avatar.png') :
         ($(".chat-avatar img").attr('src') || '/images/default-avatar.png');
 
-    const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    // 格式化時間
+    let time;
+    if (message.timestamp) {
+        if (typeof message.timestamp === 'string') {
+            time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } else {
+            time = message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+    } else {
+        time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
 
     const messageHtml = `
         <div class="message ${messageClass}">
@@ -194,6 +235,9 @@ function displayChatMessage(message) {
 
     // 如果有空聊天提示，則移除
     $(".empty-chat-message").remove();
+
+    // 滾動到底部
+    scrollToBottom();
 }
 
 // 顯示系統消息
@@ -205,6 +249,9 @@ function displaySystemMessage(text) {
     `;
 
     $("#chatMessages").append(messageHtml);
+
+    // 滾動到底部
+    scrollToBottom();
 }
 
 // 顯示打字指示器
@@ -246,8 +293,10 @@ function removeErrorMessage() {
     $(".reconnect-alert").remove();
 }
 
-// 轉義HTML以防止XSS攻擊
+// 轉譯HTML以防止XSS攻擊
 function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -259,11 +308,19 @@ function escapeHtml(unsafe) {
 // 滾動聊天區域到底部
 function scrollToBottom() {
     const chatMessages = document.getElementById('chatMessages');
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 }
 
 // 頁面載入時執行
 $(document).ready(function() {
+    console.log("頁面已加載，初始化聊天功能...");
+    console.log("當前用戶ID: " + currentUserId + ", 接收者ID: " + receiverId);
+
+    // 立即滾動到底部
+    scrollToBottom();
+
     // 連接WebSocket
     connect();
 
@@ -286,7 +343,4 @@ $(document).ready(function() {
             stompClient.disconnect();
         }
     });
-
-    // 初始滾動到底部
-    scrollToBottom();
 });

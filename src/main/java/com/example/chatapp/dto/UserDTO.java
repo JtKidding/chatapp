@@ -15,11 +15,11 @@ public class UserDTO {
 
     private Long id;
 
-    @NotBlank(message = "使用者不能為空")
-    @Size(min = 3, max = 50, message = "使用者長度必須在3-50之間")
+    @NotBlank(message = "用戶名不能為空")
+    @Size(min = 3, max = 50, message = "用戶名長度必須在3-50之間")
     private String username;
 
-    @Email(message = "信箱格是不正確")
+    @Email(message = "信箱格式不正確")
     @NotBlank(message = "信箱不能為空")
     private String email;
 
@@ -30,4 +30,18 @@ public class UserDTO {
     private String bio;
 
     private boolean online;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserDTO userDTO = (UserDTO) o;
+        return id != null && id.equals(userDTO.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }

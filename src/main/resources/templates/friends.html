@@ -53,7 +53,7 @@
         <div class="col-md-6 text-right">
             <form th:action="@{/chat/search}" method="get" class="form-inline justify-content-end">
                 <div class="input-group">
-                    <input type="text" name="keyword" class="form-control" placeholder="搜尋用戶...">
+                    <input type="text" name="keyword" class="form-control" placeholder="搜尋用戶..." required>
                     <div class="input-group-append">
                         <button class="btn btn-primary" type="submit">
                             <i class="fas fa-search"></i> 搜尋
@@ -64,15 +64,24 @@
         </div>
     </div>
 
-    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${param.added}">
-        已成功添加好友！
+    <div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${param.added != null || (successMessage != null && !successMessage.isEmpty())}">
+        <span th:if="${param.added != null}">已成功添加好友！</span>
+        <span th:if="${successMessage != null && !successMessage.isEmpty()}" th:text="${successMessage}"></span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
 
-    <div class="alert alert-info alert-dismissible fade show" role="alert" th:if="${param.removed}">
+    <div class="alert alert-info alert-dismissible fade show" role="alert" th:if="${param.removed != null}">
         已移除好友關係。
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" th:if="${param.error != null || (errorMessage != null && !errorMessage.isEmpty())}">
+        <span th:if="${param.error != null}">操作失敗，請稍後再試。</span>
+        <span th:if="${errorMessage != null && !errorMessage.isEmpty()}" th:text="${errorMessage}"></span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>

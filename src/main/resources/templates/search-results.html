@@ -51,6 +51,7 @@
             <h2>
                 <i class="fas fa-search"></i> 搜尋結果
                 <small class="text-muted" th:if="${keyword != null && !keyword.isEmpty()}" th:text="'「' + ${keyword} + '」'"></small>
+                <small class="text-muted" th:if="${keyword == null || keyword.isEmpty()}">請輸入關鍵字</small>
             </h2>
         </div>
         <div class="col-md-6 text-right">
@@ -93,13 +94,13 @@
                         </a>
 
                         <!-- 判斷是否為好友，顯示不同按鈕 -->
-                        <form th:if="${!#lists.contains(friends, user) && user.id != currentUser.id}"
+                        <form th:if="${friends != null && !#lists.contains(friends, user) && user.id != currentUser.id}"
                               th:action="@{'/user/friends/add/' + ${user.id}}" method="post" class="d-inline">
                             <button type="submit" class="btn btn-success btn-sm" title="添加好友">
                                 <i class="fas fa-user-plus"></i> 加好友
                             </button>
                         </form>
-                        <span th:if="${#lists.contains(friends, user)}" class="badge badge-success p-2">
+                        <span th:if="${friends != null && #lists.contains(friends, user)}" class="badge badge-success p-2">
                                 <i class="fas fa-check"></i> 已是好友
                             </span>
                     </div>
@@ -107,7 +108,8 @@
 
                 <div class="empty-list text-center py-4" th:if="${userResults == null || userResults.isEmpty()}">
                     <i class="fas fa-search fa-2x text-muted mb-2"></i>
-                    <p>沒有找到符合「<span th:text="${keyword}"></span>」的用戶</p>
+                    <p th:if="${keyword != null && !keyword.isEmpty()}">沒有找到符合「<span th:text="${keyword}"></span>」的用戶</p>
+                    <p th:if="${keyword == null || keyword.isEmpty()}">請輸入關鍵字開始搜尋用戶</p>
                 </div>
             </div>
         </div>
@@ -134,14 +136,14 @@
                     </div>
                     <div class="room-actions">
                         <!-- 如果已是成員，顯示進入按鈕 -->
-                        <div th:if="${#lists.contains(room.participants, currentUser)}">
+                        <div th:if="${room.participants != null && #lists.contains(room.participants, currentUser)}">
                             <a th:href="@{'/chat/room/' + ${room.id}}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-sign-in-alt"></i> 進入聊天室
                             </a>
                         </div>
 
                         <!-- 如果不是成員且聊天室不是私人的，顯示加入按鈕 -->
-                        <div th:if="${!#lists.contains(room.participants, currentUser) && !room.isPrivate}">
+                        <div th:if="${room.participants != null && !#lists.contains(room.participants, currentUser) && !room.isPrivate}">
                             <form th:action="@{'/chat/room/' + ${room.id} + '/join'}" method="post">
                                 <button type="submit" class="btn btn-success btn-sm">
                                     <i class="fas fa-plus"></i> 加入聊天室
@@ -150,7 +152,7 @@
                         </div>
 
                         <!-- 私人聊天室顯示鎖定圖標 -->
-                        <div th:if="${!#lists.contains(room.participants, currentUser) && room.isPrivate}">
+                        <div th:if="${room.participants != null && !#lists.contains(room.participants, currentUser) && room.isPrivate}">
                             <button class="btn btn-secondary btn-sm" disabled title="這是私人聊天室">
                                 <i class="fas fa-lock"></i> 私人聊天室
                             </button>
@@ -160,7 +162,8 @@
 
                 <div class="empty-list text-center py-4" th:if="${roomResults == null || roomResults.isEmpty()}">
                     <i class="fas fa-search fa-2x text-muted mb-2"></i>
-                    <p>沒有找到符合「<span th:text="${keyword}"></span>」的聊天室</p>
+                    <p th:if="${keyword != null && !keyword.isEmpty()}">沒有找到符合「<span th:text="${keyword}"></span>」的聊天室</p>
+                    <p th:if="${keyword == null || keyword.isEmpty()}">請輸入關鍵字開始搜尋聊天室</p>
                 </div>
             </div>
         </div>
@@ -169,8 +172,10 @@
     <!-- 沒有結果時顯示 -->
     <div class="text-center py-5" th:if="${(userResults == null || userResults.isEmpty()) && (roomResults == null || roomResults.isEmpty())}">
         <i class="fas fa-search fa-4x text-muted mb-3"></i>
-        <h3>沒有搜尋結果</h3>
-        <p class="text-muted">嘗試使用其他關鍵詞搜尋</p>
+        <h3 th:if="${keyword != null && !keyword.isEmpty()}">沒有搜尋結果</h3>
+        <h3 th:if="${keyword == null || keyword.isEmpty()}">請輸入搜尋關鍵字</h3>
+        <p class="text-muted" th:if="${keyword != null && !keyword.isEmpty()}">嘗試使用其他關鍵詞搜尋</p>
+        <p class="text-muted" th:if="${keyword == null || keyword.isEmpty()}">在上方搜尋欄輸入關鍵字開始搜尋</p>
         <a th:href="@{/chat}" class="btn btn-primary mt-2">
             <i class="fas fa-arrow-left"></i> 返回聊天
         </a>

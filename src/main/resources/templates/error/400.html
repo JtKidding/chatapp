@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>無效請求 - 線上聊天系統</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+  <style>
+    body {
+      background-color: #f7f9fb;
+      font-family: 'Segoe UI', 'Microsoft JhengHei', '微軟正黑體', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .error-container {
+      max-width: 600px;
+      margin: 100px auto;
+      text-align: center;
+      padding: 30px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .error-icon {
+      font-size: 5rem;
+      color: #ffc107;
+      margin-bottom: 20px;
+    }
+    .error-code {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #343a40;
+    }
+    .error-message {
+      font-size: 1.2rem;
+      color: #6c757d;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="error-container">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div class="error-code">400</div>
+    <h2>無效請求</h2>
+    <div class="error-message" th:if="${errorMessage}" th:text="${errorMessage}">
+      您的請求包含無效參數或不正確的數據格式。
+    </div>
+    <div class="error-message" th:unless="${errorMessage}">
+      您的請求包含無效參數或不正確的數據格式。
+    </div>
+    <div class="mt-4">
+      <a href="/" class="btn btn-primary mr-2">
+        <i class="fas fa-home"></i> 回到首頁
+      </a>
+      <a href="javascript:history.back()" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> 返回上一頁
+      </a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
