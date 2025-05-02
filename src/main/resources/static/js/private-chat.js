@@ -182,48 +182,21 @@ function onMessageReceived(payload) {
     try {
         const message = JSON.parse(payload.body);
         console.log("解析的消息: ", message);
-        console.log(`消息類型: ${message.type}, 發送者ID: ${message.senderId}, 接收者ID: ${message.receiverId}`);
 
-        // 檢查消息是否屬於當前聊天
-        const isCurrentChat = message.senderId == currentUserId ||
-            message.senderId == receiverId ||
-            message.receiverId == receiverId;
-
-        console.log("消息屬於當前聊天: ", isCurrentChat);
-        console.log("currentUserId: ", currentUserId);
-        console.log("receiverId: ", receiverId);
-        console.log("message.senderId: ", message.senderId);
-        console.log("message.receiverId: ", message.receiverId);
-
-        // 檢查消息是否來自當前聊天的發送者或接收者
-        if (isCurrentChat) {
-            console.log("這是當前對話的消息，準備顯示");
-
-            switch(message.type) {
-                case ChatMessageType.CHAT:
-                    // 檢查是否已顯示過此消息
-                    const messageAlreadyDisplayed =
-                        message.messageId &&
-                        $(`.message[data-message-id="${message.messageId}"]`).length > 0;
-
-                    if (!messageAlreadyDisplayed) {
-                        displayChatMessage(message);
-                    } else {
-                        console.log("消息已顯示，跳過: ", message.messageId);
-                    }
-                    break;
-                case ChatMessageType.JOIN:
-                    displaySystemMessage(message.senderUsername + ' 加入了聊天');
-                    break;
-                case ChatMessageType.LEAVE:
-                    displaySystemMessage(message.senderUsername + ' 離開了聊天');
-                    break;
+        // 判斷消息類型
+        if (message.type === ChatMessageType.CHAT) {
+            // 檢查是否已顯示過此消息
+            if (!isMessageAlreadyDisplayed(message)) {
+                displayChatMessage(message);
+                // 滾動到底部
+                scrollToBottom();
             }
-
-            // 滾動到最新消息
+        } else if (message.type === ChatMessageType.JOIN) {
+            displaySystemMessage(message.senderUsername + ' 加入了聊天');
             scrollToBottom();
-        } else {
-            console.log("收到的消息不屬於當前聊天窗口");
+        } else if (message.type === ChatMessageType.LEAVE) {
+            displaySystemMessage(message.senderUsername + ' 離開了聊天');
+            scrollToBottom();
         }
     } catch (e) {
         console.error("處理接收的消息時出錯: ", e);
@@ -232,12 +205,9 @@ function onMessageReceived(payload) {
 
 // 添加一個函數檢查消息是否已經顯示，防止重複顯示
 function isMessageAlreadyDisplayed(message) {
-    // 這是一個簡單的實現，僅用於示例
-    // 在實際應用中，您可能需要更強健的方法來識別消息
-    if (!message.id) return false;  // 如果消息沒有ID，無法判斷，直接返回false
-
-    // 檢查DOM中是否已存在該消息
-    return $(`[data-message-id="${message.id}"]`).length > 0;
+    // 使用消息ID或時間戳+發送者ID作為唯一標識
+    const msgId = message.messageId || message.id || `${message.senderId}-${new Date(message.timestamp).getTime()}`;
+    return $(`.message[data-message-id="${msgId}"]`).length > 0;
 }
 
 // 當收到打字狀態通知時
@@ -281,7 +251,8 @@ function displayChatMessage(message) {
     }
 
     // 添加了data-message-id屬性來標識消息
-    const messageId = message.id || `temp-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    // const messageId = message.id || `temp-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    const messageId = message.messageId || message.id || `${message.senderId}-${new Date(message.timestamp).getTime()}`;
 
     const messageHtml = `
         <div class="message ${messageClass}" data-message-id="${messageId}">
