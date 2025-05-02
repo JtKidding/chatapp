@@ -39,14 +39,16 @@ public class ChatController {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("用戶不存在"));
 
+        UserDTO userDTO = userService.getUserById(currentUser.getId());
+
         // 設置用戶在線狀態
-        userService.setUserOnlineStatus(currentUser.getId(), true);
+        userService.setUserOnlineStatus(userDTO.getId(), true);
 
         List<UserDTO> onlineUsers = userService.getAllUsers();
         List<UserDTO> friends = userService.getUserFriends(currentUser.getId());
         List<ChatRoom> userRooms = chatRoomService.getUserChatRooms(currentUser.getId());
 
-        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("currentUser", userDTO);
         model.addAttribute("onlineUsers", onlineUsers);
         model.addAttribute("friends", friends);
         model.addAttribute("userRooms", userRooms);
@@ -60,6 +62,7 @@ public class ChatController {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalStateException("用戶不存在"));
 
+        UserDTO userDTO = userService.getUserById(currentUser.getId());
         UserDTO chatPartner = userService.getUserById(userId);
         List<MessageDTO> messages = messageService.getConversation(currentUser.getId(), userId);
         List<UserDTO> friends = userService.getUserFriends(currentUser.getId());
@@ -73,7 +76,7 @@ public class ChatController {
             }
         }
 
-        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("currentUser", userDTO);
         model.addAttribute("chatPartner", chatPartner);
         model.addAttribute("messages", messages);
         model.addAttribute("chatType", "private");
