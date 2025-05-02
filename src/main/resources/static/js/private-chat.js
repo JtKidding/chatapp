@@ -32,6 +32,8 @@ function connect() {
     stompClient.connect(headers, function(frame) {
         isConnected = true;
         console.log('WebSocket連接成功! Frame:', frame);
+        console.log('目前用戶ID:', currentUserId);
+        console.log('接收者ID:', receiverId);
 
         // 訂閱個人頻道以接收訊息
         const subscription = stompClient.subscribe('/user/' + currentUserId + '/queue/messages', function(message) {
@@ -161,8 +163,14 @@ function updateUserStatus(isOnline) {
         data: {
             online: isOnline
         },
+        success: function(response) {
+            console.log("用戶狀態更新成功");
+        },
         error: function(error) {
             console.log('無法更新狀態: ' + error);
+            if (xhr.status === 403) {
+                console.log('CSRF token 可能無效或缺失');
+            }
         }
     });
 }
@@ -373,6 +381,15 @@ function scrollToBottom() {
 $(document).ready(function() {
     console.log("頁面已加載，初始化聊天功能...");
     console.log("當前用戶ID: " + currentUserId + ", 接收者ID: " + receiverId);
+
+    const csrfToken = $("meta[name='_csrf']").attr("content");
+    const csrfHeader = $("meta[name='_csrf_header']").attr("content");
+    if (csrfToken && csrfHeader) {
+        console.log("CSRF protection detected, adding tokens to AJAX requests");
+        $(document).ajaxSend(function(e, xhr, options) {
+            xhr.setRequestHeader(csrfHeader, csrfToken);
+        });
+    }
 
     // 立即滾動到底部
     scrollToBottom();

@@ -155,6 +155,14 @@ function escapeHtml(unsafe) {
 
 // 頁面載入時執行
 $(document).ready(function() {
+
+    const csrfToken = $("meta[name='_csrf']").attr("content");
+    const csrfHeader = $("meta[name='_csrf_header']").attr("content");
+    if (csrfToken && csrfHeader) {
+        $(document).ajaxSend(function(e, xhr, options) {
+            xhr.setRequestHeader(csrfHeader, csrfToken);
+        });
+    }
     // 連接WebSocket
     connect();
 

@@ -33,7 +33,7 @@ public class WebSocketController {
                 chatMessage.getSenderId(), receiverId, chatMessage.getType(), chatMessage.getContent());
 
         // 確保接收者ID已設置
-//        chatMessage.setReceiverId(receiverId);
+        chatMessage.setReceiverId(receiverId);
 
         // 儲存聊天訊息到資料庫 (僅針對聊天訊息，非系統訊息)
         if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {

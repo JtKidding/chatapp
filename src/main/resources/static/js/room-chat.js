@@ -102,8 +102,14 @@ function updateUserStatus(isOnline) {
         data: {
             online: isOnline
         },
+        success: function(response) {
+            console.log("用戶狀態更新成功");
+        },
         error: function(error) {
             console.log('無法更新狀態: ' + error);
+            if (xhr.status === 403) {
+                console.log('CSRF token 可能無效或缺失');
+            }
         }
     });
 }
@@ -237,6 +243,16 @@ function scrollToBottom() {
 
 // 頁面載入時執行
 $(document).ready(function() {
+
+    const csrfToken = $("meta[name='_csrf']").attr("content");
+    const csrfHeader = $("meta[name='_csrf_header']").attr("content");
+    if (csrfToken && csrfHeader) {
+        console.log("CSRF protection detected, adding tokens to AJAX requests");
+        $(document).ajaxSend(function(e, xhr, options) {
+            xhr.setRequestHeader(csrfHeader, csrfToken);
+        });
+    }
+
     // 連接WebSocket
     connect();
 
