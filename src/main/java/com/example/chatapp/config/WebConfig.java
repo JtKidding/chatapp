@@ -3,6 +3,9 @@ package com.example.chatapp.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.ResourceResolver;
@@ -10,6 +13,7 @@ import org.springframework.web.servlet.resource.ResourceResolverChain;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -38,5 +42,17 @@ public class WebConfig implements WebMvcConfigurer {
         // 保留預設的靜態資源處理
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/");
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // 添加Jackson JSON轉換器
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setSupportedMediaTypes(Arrays.asList(
+                MediaType.APPLICATION_JSON,
+                new MediaType("application", "*+json"),
+                new MediaType("text", "event-stream") // 支持SSE
+        ));
+        converters.add(converter);
     }
 }

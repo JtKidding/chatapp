@@ -11,25 +11,34 @@ let typingTimeout = null;
 
 // 連接WebSocket
 function connect() {
-    console.log("嘗試連接WebSocket...");
+    console.log("嘗試連接WebSocket... currentUserId=" + currentUserId + ", receiverId=" + receiverId);
     const socket = new SockJS('/ws');
     stompClient = Stomp.over(socket);
 
     // 關閉console中的debug輸出
     // 在開發模式下保留debug輸出，以便排查問題
-    // stompClient.debug = null;
+    stompClient.debug = function(str) {
+        console.log('STOMP DEBUG: ' + str);
+    };
 
-    stompClient.connect({}, function(frame) {
+    // 添加身份認證頭 (如果需要)
+    const headers = {};
+    // const csrfHeader = $("meta[name='_csrf_header']").attr("content");
+    // const csrfToken = $("meta[name='_csrf']").attr("content");
+    // if (csrfHeader && csrfToken) {
+    //     headers[csrfHeader] = csrfToken;
+    // }
+
+    stompClient.connect(headers, function(frame) {
         isConnected = true;
-        console.log('Connected: ' + frame);
+        console.log('WebSocket連接成功! Frame:', frame);
 
         // 訂閱個人頻道以接收訊息
-        stompClient.subscribe('/user/' + currentUserId + '/queue/messages', onMessageReceived);
-        console.log("已訂閱: /user/" + currentUserId + "/queue/messages");
-
-        // 訂閱打字狀態通知
-        stompClient.subscribe('/user/' + currentUserId + '/queue/typing', onTypingReceived);
-        console.log("已訂閱打字通知頻道");
+        const subscription = stompClient.subscribe('/user/' + currentUserId + '/queue/messages', function(message) {
+            console.log('收到消息: ', message);
+            onMessageReceived(message);
+        });
+        console.log("訂閱消息頻道: /user/" + currentUserId + "/queue/messages", subscription);
 
         // 發送加入聊天的系統消息
         sendStatusMessage(ChatMessageType.JOIN);
@@ -69,7 +78,7 @@ function sendMessage() {
     const content = messageInput.val().trim();
 
     if (content && isConnected) {
-        console.log(currentUserId + "正在發送消息: '" + content + "' 給接收者ID: " + receiverId);
+        console.log(`發送消息: 發送者=${currentUserId}, 接收者=${receiverId}, 內容='${content}'`);
 
         const chatMessage = {
             type: ChatMessageType.CHAT,
@@ -80,8 +89,11 @@ function sendMessage() {
             timestamp: new Date()
         };
 
+        console.log("發送到目的地: /app/chat.private." + receiverId);
+        console.log("消息內容:", JSON.stringify(chatMessage));
         // 發送到服務器
         stompClient.send("/app/chat.private." + receiverId, {}, JSON.stringify(chatMessage));
+        console.log("消息已發送");
 
         // 清空輸入框
         messageInput.val('');
@@ -94,6 +106,9 @@ function sendMessage() {
 
         // 聚焦回輸入框
         messageInput.focus();
+    } else if (!isConnected) {
+        console.error("WebSocket未連接，無法發送消息");
+        alert("網絡連接已斷開，請重新整理頁面");
     }
 }
 
@@ -154,29 +169,67 @@ function updateUserStatus(isOnline) {
 
 // 當收到消息時
 function onMessageReceived(payload) {
-    console.log("收到消息: ", payload);
+    console.log("收到WebSocket消息. Payload:", payload);
 
     try {
         const message = JSON.parse(payload.body);
         console.log("解析的消息: ", message);
+        console.log(`消息類型: ${message.type}, 發送者ID: ${message.senderId}, 接收者ID: ${message.receiverId}`);
 
-        switch(message.type) {
-            case ChatMessageType.CHAT:
-                displayChatMessage(message);
-                break;
-            case ChatMessageType.JOIN:
-                displaySystemMessage(message.senderUsername + ' 加入了聊天');
-                break;
-            case ChatMessageType.LEAVE:
-                displaySystemMessage(message.senderUsername + ' 離開了聊天');
-                break;
+        // 檢查消息是否屬於當前聊天
+        const isCurrentChat = message.senderId == currentUserId ||
+            message.senderId == receiverId ||
+            message.receiverId == receiverId;
+
+        console.log("消息屬於當前聊天: ", isCurrentChat);
+        console.log("currentUserId: ", currentUserId);
+        console.log("receiverId: ", receiverId);
+        console.log("message.senderId: ", message.senderId);
+        console.log("message.receiverId: ", message.receiverId);
+
+        // 檢查消息是否來自當前聊天的發送者或接收者
+        if (isCurrentChat) {
+            console.log("這是當前對話的消息，準備顯示");
+
+            switch(message.type) {
+                case ChatMessageType.CHAT:
+                    // 檢查是否已顯示過此消息
+                    const messageAlreadyDisplayed =
+                        message.messageId &&
+                        $(`.message[data-message-id="${message.messageId}"]`).length > 0;
+
+                    if (!messageAlreadyDisplayed) {
+                        displayChatMessage(message);
+                    } else {
+                        console.log("消息已顯示，跳過: ", message.messageId);
+                    }
+                    break;
+                case ChatMessageType.JOIN:
+                    displaySystemMessage(message.senderUsername + ' 加入了聊天');
+                    break;
+                case ChatMessageType.LEAVE:
+                    displaySystemMessage(message.senderUsername + ' 離開了聊天');
+                    break;
+            }
+
+            // 滾動到最新消息
+            scrollToBottom();
+        } else {
+            console.log("收到的消息不屬於當前聊天窗口");
         }
-
-        // 滾動到最新消息
-        scrollToBottom();
     } catch (e) {
         console.error("處理接收的消息時出錯: ", e);
     }
+}
+
+// 添加一個函數檢查消息是否已經顯示，防止重複顯示
+function isMessageAlreadyDisplayed(message) {
+    // 這是一個簡單的實現，僅用於示例
+    // 在實際應用中，您可能需要更強健的方法來識別消息
+    if (!message.id) return false;  // 如果消息沒有ID，無法判斷，直接返回false
+
+    // 檢查DOM中是否已存在該消息
+    return $(`[data-message-id="${message.id}"]`).length > 0;
 }
 
 // 當收到打字狀態通知時
@@ -219,8 +272,11 @@ function displayChatMessage(message) {
         time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
 
+    // 添加了data-message-id屬性來標識消息
+    const messageId = message.id || `temp-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+
     const messageHtml = `
-        <div class="message ${messageClass}">
+        <div class="message ${messageClass}" data-message-id="${messageId}">
             <div class="message-avatar">
                 <img src="${avatar}" alt="頭像">
             </div>

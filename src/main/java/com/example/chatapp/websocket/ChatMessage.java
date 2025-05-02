@@ -22,4 +22,8 @@ public class ChatMessage {
     private Long receiverId;
     private Long roomId;
     private LocalDateTime timestamp = LocalDateTime.now();
+
+    // 添加消息ID字段，用於跟踪消息和避免重複顯示
+    private Long messageId;
+
 }

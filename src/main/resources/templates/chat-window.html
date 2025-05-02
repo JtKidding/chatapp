@@ -117,7 +117,20 @@
         ", 當前用戶名=" + currentUsername +
         ", 接收者ID=" + receiverId +
         ", 接收者用戶名=" + receiverUsername);
+
+    // 全局 CSRF 頭部，確保每個請求都包含 CSRF token (如果使用了Spring Security)
+    const csrfHeader = $("meta[name='_csrf_header']").attr("content");
+    const csrfToken = $("meta[name='_csrf']").attr("content");
+
+    if (csrfHeader && csrfToken) {
+        console.log("CSRF 保護已啟用，將添加到所有請求中");
+        $(document).ajaxSend(function(e, xhr, options) {
+            xhr.setRequestHeader(csrfHeader, csrfToken);
+        });
+    }
 </script>
 <script th:src="@{/js/private-chat.js}"></script>
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 </body>
 </html>
