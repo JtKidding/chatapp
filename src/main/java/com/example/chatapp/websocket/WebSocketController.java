@@ -29,6 +29,11 @@ public class WebSocketController {
                                    @Payload ChatMessage chatMessage,
                                    SimpMessageHeaderAccessor headerAccessor) {
         try {
+            // 添加額外的參數驗證
+            if (chatMessage.getSenderId() == null || receiverId == null) {
+                logger.error("發送者或接收者ID為空");
+                return;
+            }
             logger.info("=====================================================");
             logger.info("接收到私聊訊息: 發送者={}, 接收者={}, 類型={}, 內容={}",
                     chatMessage.getSenderId(), receiverId, chatMessage.getType(), chatMessage.getContent());

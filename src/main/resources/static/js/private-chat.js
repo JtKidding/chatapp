@@ -46,6 +46,8 @@ function connect() {
         console.log('接收者ID:', receiverId);
         console.log("前端用戶ID類型:", typeof currentUserId);  // 確認是數字還是字符串
         console.log("前端接收者ID類型:", typeof receiverId);
+        console.log("前端用戶ID類型toString:", typeof currentUserId.toString());  // 確認是數字還是字符串
+        console.log("前端接收者ID類型toString:", typeof receiverId.toString());
 
         // 添加更多日誌來確認訂閱流程
         console.log('開始訂閱消息頻道...');
@@ -55,11 +57,17 @@ function connect() {
             const subscription = stompClient.subscribe('/user/' + currentUserId.toString() + '/queue/messages', function messageCallback(message) {
                 console.warn(currentUserId.toString() + '收到消息: ' + message.body);
 
+                    // 在UI中也顯示接收事件（僅用於診斷）
+                    $("#chatMessages").append(
+                        `<div class="system-message" style="color:blue;">
+                    <p>message.body: ${message.body}</p>
+                    </div>`
+                    );
                 // 在UI中也顯示接收事件（僅用於診斷）
                 $("#chatMessages").append(
                     `<div class="system-message" style="color:blue;">
                     <p>除錯: ${receivedMsg}</p>
-                </div>`
+                    </div>`
                 );
 
                 onMessageReceived(message);
@@ -118,7 +126,7 @@ function sendMessage() {
             timestamp: new Date()
         };
 
-        console.log("發送到目的地: /app/chat.private." + receiverId);
+        console.log("發送到目的地: /app/chat.private." + receiverId.toString());
         console.log("消息內容:", JSON.stringify(chatMessage));
         // 發送到服務器
         stompClient.send("/app/chat.private." + receiverId.toString(), {}, JSON.stringify(chatMessage));
@@ -427,6 +435,9 @@ function testWebSocketConnection() {
     // 直接發送到自己的訂閱
     stompClient.send("/app/chat.private." + receiverId.toString(), {}, JSON.stringify(testMessage));
     console.log("測試消息已發送");
+    displayChatMessage(testMessage);
+
+    scrollToBottom();
 }
 
 // 頁面載入時執行

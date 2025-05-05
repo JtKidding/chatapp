@@ -6,7 +6,7 @@ spring:
   application: # 應用名稱
     name: chatapp
   datasource:
-    url: jdbc:h2:file:./data/chatdb
+    url: jdbc:h2:file:./data/chatdb;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
     password: password
