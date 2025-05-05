@@ -28,70 +28,85 @@ public class WebSocketController {
     public void sendPrivateMessage(@DestinationVariable Long receiverId,
                                    @Payload ChatMessage chatMessage,
                                    SimpMessageHeaderAccessor headerAccessor) {
+        try {
+            logger.info("=====================================================");
+            logger.info("接收到私聊訊息: 發送者={}, 接收者={}, 類型={}, 內容={}",
+                    chatMessage.getSenderId(), receiverId, chatMessage.getType(), chatMessage.getContent());
+            logger.error("接收者ID類型: {}, 值: {}",
+                    receiverId.getClass().getName(), receiverId);
+            logger.error("發送者ID類型: {}, 值: {}",
+                    chatMessage.getSenderId().getClass().getName(), chatMessage.getSenderId());
+            // 確保接收者ID已設置
+            chatMessage.setReceiverId(receiverId);
 
-        logger.info("接收到私聊訊息: 發送者={}, 接收者={}, 類型={}, 內容={}",
-                chatMessage.getSenderId(), receiverId, chatMessage.getType(), chatMessage.getContent());
+            // 儲存聊天訊息到資料庫 (僅針對聊天訊息，非系統訊息)
+            if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {
+                try {
+                    MessageDTO savedMessage = messageService.sendMessage(
+                            chatMessage.getSenderId(),
+                            receiverId,
+                            chatMessage.getContent()
+                    );
 
-        // 確保接收者ID已設置
-        chatMessage.setReceiverId(receiverId);
+                    // 創建包含保存ID的新消息對象
+                    ChatMessage messageToSend = new ChatMessage();
+                    messageToSend.setType(chatMessage.getType());
+                    messageToSend.setSenderId(chatMessage.getSenderId());
+                    messageToSend.setSenderUsername(chatMessage.getSenderUsername());
+                    messageToSend.setContent(chatMessage.getContent());
+                    messageToSend.setReceiverId(receiverId);
+                    messageToSend.setTimestamp(savedMessage.getTimestamp());
+                    messageToSend.setMessageId(savedMessage.getId());  // 設置資料庫ID
 
-        // 儲存聊天訊息到資料庫 (僅針對聊天訊息，非系統訊息)
-        if (chatMessage.getType() == ChatMessage.MessageType.CHAT) {
-            try {
-                MessageDTO savedMessage = messageService.sendMessage(
-                        chatMessage.getSenderId(),
-                        receiverId,
-                        chatMessage.getContent()
-                );
+                    logger.error("訊息已儲存到資料庫, ID={}, 準備發送給接收者={}",
+                            savedMessage.getId(), receiverId);
 
-                // 這裡不要嘗試修改原始的chatMessage對象，而是創建一個新的
-                ChatMessage savedChatMessage = new ChatMessage();
-                savedChatMessage.setType(chatMessage.getType());
-                savedChatMessage.setSenderId(chatMessage.getSenderId());
-                savedChatMessage.setSenderUsername(chatMessage.getSenderUsername());
-                savedChatMessage.setContent(chatMessage.getContent());
-                savedChatMessage.setReceiverId(receiverId);
-                savedChatMessage.setTimestamp(savedMessage.getTimestamp());
-                // 設置一個ID字段
-                savedChatMessage.setMessageId(savedMessage.getId());
+                    // 1. 發送給接收者
+                    logger.error("發送訊息給接收者: {}", receiverId);
+                    messagingTemplate.convertAndSendToUser(
+                            receiverId.toString(),
+                            "/queue/messages",
+                            messageToSend
+                    );
+                    logger.error("訊息已發送給接收者");
 
-                logger.info("訊息已儲存到資料庫, ID={}", savedMessage.getId());
+                    // 2. 發送給發送者（確認）
+                    logger.error("發送確認訊息給發送者: {}", chatMessage.getSenderId());
+                    messagingTemplate.convertAndSendToUser(
+                            chatMessage.getSenderId().toString(),
+                            "/queue/messages",
+                            messageToSend
+                    );
+                    logger.error("確認訊息已發送給發送者");
 
-                // 將訊息發送給接收者
-                logger.info("發送訊息給接收者: {}", receiverId);
-                messagingTemplate.convertAndSendToUser(
-                        receiverId.toString(),
-                        "/queue/messages",
-                        savedChatMessage
-                );
+                } catch (Exception e) {
+                    logger.error("儲存訊息時出錯", e);
+                    e.printStackTrace(); // 輸出完整堆疊追蹤
+                }
+            } else {
+                // 對於非聊天類型的消息（如JOIN、LEAVE等），直接轉發
+                try {
+                    // 發送給接收者
+                    messagingTemplate.convertAndSendToUser(
+                            receiverId.toString(),
+                            "/queue/messages",
+                            chatMessage
+                    );
 
-                // 也發送給發送者以確認
-                logger.info("發送確認訊息給發送者: {}", chatMessage.getSenderId());
-                messagingTemplate.convertAndSendToUser(
-                        chatMessage.getSenderId().toString(),
-                        "/queue/messages",
-                        savedChatMessage
-                );
-            } catch (Exception e) {
-                logger.error("儲存訊息時出錯", e);
+                    // 也發送給發送者（若非同一人）
+                    messagingTemplate.convertAndSendToUser(
+                            chatMessage.getSenderId().toString(),
+                            "/queue/messages",
+                            chatMessage
+                    );
+                } catch (Exception e) {
+                    logger.error("發送系統訊息時出錯", e);
+                }
             }
-        } else {
-            // 對於非聊天類型的消息（如JOIN、LEAVE等），直接轉發
-            try {
-                messagingTemplate.convertAndSendToUser(
-                        receiverId.toString(),
-                        "/queue/messages",
-                        chatMessage
-                );
-
-                messagingTemplate.convertAndSendToUser(
-                        chatMessage.getSenderId().toString(),
-                        "/queue/messages",
-                        chatMessage
-                );
-            } catch (Exception e) {
-                logger.error("發送系統訊息時出錯", e);
-            }
+            logger.info("=====================================================");
+        } catch (Exception e) {
+            logger.error("處理WebSocket消息時出現未捕獲異常", e);
+            e.printStackTrace();
         }
 
 //        try {

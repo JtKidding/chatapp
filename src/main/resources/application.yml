@@ -48,7 +48,10 @@ spring:
 logging: # 日誌配置
   level:
     org:
-      springframework: INFO
+      springframework:
+        web:
+          socket: DEBUG
+        messaging: DEBUG
     com:
       example:
         chatapp: DEBUG

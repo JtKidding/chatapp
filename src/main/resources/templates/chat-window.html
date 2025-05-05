@@ -18,6 +18,11 @@
     <!-- 主聊天區域 -->
     <div class="chat-area">
         <!-- 聊天頭部 -->
+        <div class="alert alert-info" id="connection-status">
+            WebSocket狀態: <span id="ws-status">未連接</span>
+            <button id="reconnect-button" class="btn btn-sm btn-warning">重新連接</button>
+            <button id="test-ws-button" class="btn btn-info btn-sm">測試連接</button>
+        </div>
         <div class="chat-header">
             <a href="javascript:history.back()" class="back-button d-md-none">
                 <i class="fas fa-arrow-left"></i>

@@ -17,8 +17,17 @@ function connect() {
 
     // 關閉console中的debug輸出
     // 在開發模式下保留debug輸出，以便排查問題
-    stompClient.debug = function(str) {
-        console.log('STOMP DEBUG: ' + str);
+    // stompClient.debug = function(str) {
+    //     console.log('STOMP DEBUG: ' + str);
+    // };
+    stompClient.debug = null;
+
+    // 自訂訊息處理器
+    const originalConsoleLog = console.log;
+    window.wsDebugLog = function(msg) {
+        originalConsoleLog("WebSocket除錯: " + msg);
+        // 也可以考慮添加到頁面的某個元素
+        $("#chatMessages").append("<div class='system-message'><p>除錯: " + msg + "</p></div>");
     };
 
     // 添加身份認證頭 (如果需要)
@@ -29,18 +38,39 @@ function connect() {
     //     headers[csrfHeader] = csrfToken;
     // }
 
-    stompClient.connect(headers, function(frame) {
+    stompClient.connect(headers, function frameCallback(frame) {
         isConnected = true;
         console.log('WebSocket連接成功! Frame:', frame);
+        window.wsDebugLog("WebSocket連接成功!! Frame: " + frame);
         console.log('目前用戶ID:', currentUserId);
         console.log('接收者ID:', receiverId);
+        console.log("前端用戶ID類型:", typeof currentUserId);  // 確認是數字還是字符串
+        console.log("前端接收者ID類型:", typeof receiverId);
 
-        // 訂閱個人頻道以接收訊息
-        const subscription = stompClient.subscribe('/user/' + currentUserId + '/queue/messages', function(message) {
-            console.log('收到消息: ', message);
-            onMessageReceived(message);
-        });
-        console.log("訂閱消息頻道: /user/" + currentUserId + "/queue/messages", subscription);
+        // 添加更多日誌來確認訂閱流程
+        console.log('開始訂閱消息頻道...');
+        try {
+            // 訂閱個人頻道以接收訊息
+            window.wsDebugLog("嘗試訂閱 /user/" + currentUserId.toString() + "/queue/messages");
+            const subscription = stompClient.subscribe('/user/' + currentUserId.toString() + '/queue/messages', function messageCallback(message) {
+                console.warn(currentUserId.toString() + '收到消息: ' + message.body);
+
+                // 在UI中也顯示接收事件（僅用於診斷）
+                $("#chatMessages").append(
+                    `<div class="system-message" style="color:blue;">
+                    <p>除錯: ${receivedMsg}</p>
+                </div>`
+                );
+
+                onMessageReceived(message);
+            },
+            function subscribeErrorCallback(error) {
+                window.wsDebugLog("訂閱出錯: " + error);
+            });
+            console.log("訂閱消息頻道: /user/" + currentUserId.toString() + "/queue/messages", subscription);
+        } catch (error) {
+            console.error(error);
+        }
 
         // 發送加入聊天的系統消息
         sendStatusMessage(ChatMessageType.JOIN);
@@ -54,14 +84,11 @@ function connect() {
 
         // 移除連接錯誤消息（如果有）
         removeErrorMessage();
-    }, function(error) {
-        isConnected = false;
+    }, function connectErrorCallback(error) {
+        window.wsDebugLog("WebSocket連接失敗: " + error);
         console.log('無法連接WebSocket: ' + error);
-
-        // 顯示連接錯誤消息
+        isConnected = false;
         showErrorMessage();
-
-        // 5秒後重試連接
         setTimeout(connect, 5000);
     });
 }
@@ -94,7 +121,7 @@ function sendMessage() {
         console.log("發送到目的地: /app/chat.private." + receiverId);
         console.log("消息內容:", JSON.stringify(chatMessage));
         // 發送到服務器
-        stompClient.send("/app/chat.private." + receiverId, {}, JSON.stringify(chatMessage));
+        stompClient.send("/app/chat.private." + receiverId.toString(), {}, JSON.stringify(chatMessage));
         console.log("消息已發送");
 
         // 清空輸入框
@@ -130,7 +157,7 @@ function sendTypingNotification() {
         };
 
         // 發送到服務器
-        stompClient.send("/app/chat.typing." + receiverId, {}, JSON.stringify(chatMessage));
+        stompClient.send("/app/chat.typing." + receiverId.toString(), {}, JSON.stringify(chatMessage));
 
         // 設置新的計時器，在用戶停止打字後取消通知
         typingTimeout = setTimeout(function() {
@@ -150,7 +177,7 @@ function sendStatusMessage(type) {
         };
 
         // 發送到服務器
-        stompClient.send("/app/chat.private." + receiverId, {}, JSON.stringify(chatMessage));
+        stompClient.send("/app/chat.private." + receiverId.toString(), {}, JSON.stringify(chatMessage));
     }
 }
 
@@ -181,25 +208,55 @@ function onMessageReceived(payload) {
 
     try {
         const message = JSON.parse(payload.body);
-        console.log("解析的消息: ", message);
+        console.log("解析後的消息內容:", message);
+        console.log("消息類型:", message.type);
+        console.log("發送者ID:", message.senderId);
+        console.log("接收者ID:", message.receiverId);
+        console.log("消息ID:", message.messageId || message.id || "無ID");
 
-        // 判斷消息類型
-        if (message.type === ChatMessageType.CHAT) {
-            // 檢查是否已顯示過此消息
-            if (!isMessageAlreadyDisplayed(message)) {
-                displayChatMessage(message);
-                // 滾動到底部
-                scrollToBottom();
+        // 針對當前聊天的消息處理
+        if ((message.senderId == receiverId && message.receiverId == currentUserId) ||
+            (message.senderId == currentUserId && message.receiverId == receiverId)) {
+
+            console.log("這是當前對話的消息，準備顯示");
+
+            // 根據消息類型處理
+            switch(message.type) {
+                case ChatMessageType.CHAT:
+                    // 檢查是否已顯示過此消息 (使用自定義ID或系統ID)
+                    const msgId = message.messageId || message.id || `${message.senderId}-${new Date(message.timestamp).getTime()}`;
+                    const existingMsg = $(`.message[data-message-id="${msgId}"]`);
+
+                    if (existingMsg.length === 0) {
+                        console.log("這是新消息，顯示到聊天視窗");
+                        displayChatMessage(message);
+                    } else {
+                        console.log("消息已存在，不再重複顯示", msgId);
+                    }
+                    break;
+
+                case ChatMessageType.JOIN:
+                    displaySystemMessage(message.senderUsername + ' 加入了聊天');
+                    break;
+
+                case ChatMessageType.LEAVE:
+                    displaySystemMessage(message.senderUsername + ' 離開了聊天');
+                    break;
+
+                default:
+                    console.log("未知的消息類型:", message.type);
             }
-        } else if (message.type === ChatMessageType.JOIN) {
-            displaySystemMessage(message.senderUsername + ' 加入了聊天');
+
+            // 滾動到最新消息
             scrollToBottom();
-        } else if (message.type === ChatMessageType.LEAVE) {
-            displaySystemMessage(message.senderUsername + ' 離開了聊天');
-            scrollToBottom();
+        } else {
+            console.log("這不是當前對話的消息，忽略顯示");
+            console.log("當前聊天: currentUserId=" + currentUserId + ", receiverId=" + receiverId);
+            console.log("消息: senderId=" + message.senderId + ", receiverId=" + message.receiverId);
         }
     } catch (e) {
         console.error("處理接收的消息時出錯: ", e);
+        console.error("錯誤堆疊:", e.stack);
     }
 }
 
@@ -348,10 +405,78 @@ function scrollToBottom() {
     }
 }
 
+// 在private-chat.js中添加測試功能
+function testWebSocketConnection() {
+    if (!isConnected) {
+        console.error("WebSocket未連接，無法測試");
+        alert("WebSocket未連接，請先連接");
+        return;
+    }
+
+    console.log("發送測試消息...");
+
+    // 發送一個簡單的測試消息給自己
+    const testMessage = {
+        type: "CHAT",
+        senderId: currentUserId,
+        senderUsername: currentUsername,
+        content: "這是一條測試消息 - " + new Date().toLocaleTimeString(),
+        receiverId: receiverId // 發給自己
+    };
+
+    // 直接發送到自己的訂閱
+    stompClient.send("/app/chat.private." + receiverId.toString(), {}, JSON.stringify(testMessage));
+    console.log("測試消息已發送");
+}
+
 // 頁面載入時執行
 $(document).ready(function() {
     console.log("頁面已加載，初始化聊天功能...");
     console.log("當前用戶ID: " + currentUserId + ", 接收者ID: " + receiverId);
+
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error("捕獲到未處理錯誤:", message);
+        console.error("詳細信息:", error);
+
+        // 添加到頁面以便看到
+        $("#chatMessages").append(
+            `<div class="system-message text-danger">
+            <p>錯誤: ${message}</p>
+            <p>位置: ${source} (${lineno}:${colno})</p>
+        </div>`
+        );
+
+        return false; // 允許錯誤繼續傳播到控制台
+    };
+
+    // 顯示連接狀態
+    function updateConnectionStatus() {
+        if (isConnected) {
+            $("#ws-status").text("已連接").addClass("text-success").removeClass("text-danger");
+        } else {
+            $("#ws-status").text("未連接").addClass("text-danger").removeClass("text-success");
+        }
+    }
+
+    // 定期檢查連接狀態
+    setInterval(updateConnectionStatus, 1000);
+
+    // 手動重連按鈕
+    $("#reconnect-button").click(function() {
+        if (stompClient) {
+            try {
+                stompClient.disconnect();
+            } catch (e) {
+                console.error("斷開連接時出錯:", e);
+            }
+        }
+
+        // 兩秒後重新連接
+        setTimeout(function() {
+            console.warn("手動重新連接中...");
+            connect();
+        }, 2000);
+    });
 
     const csrfToken = $("meta[name='_csrf']").attr("content");
     const csrfHeader = $("meta[name='_csrf_header']").attr("content");
@@ -367,6 +492,11 @@ $(document).ready(function() {
 
     // 連接WebSocket
     connect();
+
+    // 綁定測試按鈕事件
+    $("#test-ws-button").click(function() {
+        testWebSocketConnection();
+    });
 
     // 發送按鈕點擊事件
     $("#messageForm").on('submit', function(e) {
